@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Settings - Soil Science</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body>
+
+<div id="wrapper">
+    <nav id="sidebar">
+        <div class="sidebar-header">
+            <h4 class="mb-0 text-success fw-bold"><i class="bi bi-tree-fill me-2"></i>Soil Science</h4>
+        </div>
+        <ul class="list-unstyled components">
+            <li><a href="dashboard.html"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a></li>
+            <li><a href="soil-analysis.html"><i class="bi bi-moisture me-2"></i> Soil Analysis</a></li>
+            <li><a href="crop-recommendation.html"><i class="bi bi-journal-check me-2"></i> Crop Engine</a></li>
+            <li><a href="dealers.html"><i class="bi bi-shop me-2"></i> Locate Dealers</a></li>
+            <li><a href="feedback.html"><i class="bi bi-chat-dots me-2"></i> Feedback</a></li>
+            <li class="active"><a href="settings.html"><i class="bi bi-gear me-2"></i> System Settings</a></li>
+            <li><a href="../api/logout.php" class="text-danger"><i class="bi bi-box-arrow-left me-2"></i> Sign Out</a></li>
+        </ul>
+    </nav>
+
+    <!-- Page Content Workspace Window -->
+    <div id="content">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 px-4 rounded shadow-sm mb-4">
+            <div class="container-fluid p-0">
+                <button type="button" id="sidebarCollapse" class="btn btn-success-custom"><i class="bi bi-list"></i></button>
+                <h4 class="mb-0 ms-3 fw-bold text-dark">Security Settings Console</h4>
+            </div>
+        </nav>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm p-4 bg-white mb-4">
+                    <h5 class="fw-bold mb-1 text-dark"><i class="bi bi-shield-lock me-2 text-success"></i>Update Security Password</h5>
+                    <p class="text-muted small mb-4">Modify your platform authentication credentials. We recommend a combination of numbers, special symbols, and mixed cases.</p>
+                    
+                    <div id="settingsAlert" class="alert d-none" role="alert"></div>
+
+                    <form id="passwordUpdateForm">
+                        <!-- Current Password Input -->
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Current System Password</label>
+                            <input type="password" name="current_password" class="form-control" placeholder="••••••••" required>
+                        </div>
+                        
+                        <hr class="my-4 text-muted opacity-25">
+
+                        <!-- New Password Inputs Grid -->
+                        <div class="row g-3 mb-4">
+                            <div class="col-sm-6">
+                                <label class="form-label small fw-semibold">New Safe Password</label>
+                                <input type="password" name="new_password" id="newPassword" class="form-control" placeholder="Minimum 6 characters" required>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label small fw-semibold">Confirm New Password</label>
+                                <input type="password" name="confirm_password" id="confirmPassword" class="form-control" placeholder="Repeat token entry..." required>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-success-custom py-2 px-4"><i class="bi bi-key-fill me-1"></i> Commit Security Token</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.getElementById('sidebarCollapse').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('active');
+    });
+
+    document.getElementById("passwordUpdateForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const alertBox = document.getElementById("settingsAlert");
+        
+        const newPass = document.getElementById("newPassword").value;
+        const confirmPass = document.getElementById("confirmPassword").value;
+
+        // Frontend validation: Stop execution immediately if entries mismatch
+        if (newPass !== confirmPass) {
+            alertBox.className = "alert alert-warning";
+            alertBox.textContent = "Validation Mismatch: New password entries do not match.";
+            alertBox.classList.remove("d-none");
+            return;
+        }
+
+        const formData = new FormData(e.target);
+
+        try {
+            const response = await fetch(`../api/update_password.php?t=${Date.now()}`, {
+                method: "POST",
+                body: formData
+            });
+            const data = await response.json();
+
+            if (data.status === "success") {
+                alertBox.className = "alert alert-success";
+                alertBox.textContent = "Authentication credentials successfully reset.";
+                alertBox.classList.remove("d-none");
+                e.target.reset();
+            } else {
+                alertBox.className = "alert alert-danger";
+                alertBox.textContent = data.message;
+                alertBox.classList.remove("d-none");
+            }
+        } catch (err) {
+            alertBox.className = "alert alert-danger";
+            alertBox.textContent = "Network synchronization channel failure updating security keys.";
+            alertBox.classList.remove("d-none");
+        }
+    });
+</script>
+</body>
+</html>

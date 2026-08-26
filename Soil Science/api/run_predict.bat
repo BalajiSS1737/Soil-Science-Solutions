@@ -1,0 +1,1 @@
+@"C:\Users\balaj\AppData\Local\Programs\Python\Python314\python.exe" "C:\xampp\htdocs\SoilScience\api\predict.py"

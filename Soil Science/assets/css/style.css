@@ -1,0 +1,38 @@
+:root {
+    --primary-green: #2e7d32;
+    --light-green: #4caf50;
+    --dark-neutral: #212529;
+    --sidebar-width: 260px;
+    --bg-light: #f8f9fa;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-light);
+    color: var(--dark-neutral);
+}
+
+/* Authentication Card Styling */
+.auth-card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+}
+
+.btn-success-custom {
+    background-color: var(--primary-green);
+    border-color: var(--primary-green);
+    color: #ffffff;
+    transition: background-color 0.2s ease;
+}
+
+.btn-success-custom:hover {
+    background-color: #1b5e20;
+    color: #ffffff;
+}
+
+/* Form Controls */
+.form-control:focus {
+    border-color: var(--light-green);
+    box-shadow: 0 0 0 0.25rem rgba(76, 175, 80, 0.25);
+}

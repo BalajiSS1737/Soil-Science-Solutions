@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Profile - DealerHub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body>
+
+<div id="wrapper">
+    <nav id="sidebar">
+        <div class="sidebar-header">
+            <h4 class="mb-0 text-primary fw-bold"><i class="bi bi-shop me-2"></i>DealerHub</h4>
+        </div>
+        <ul class="list-unstyled components">
+            <li><a href="dashboard.html"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a></li>
+            <li><a href="farmer-requests.html"><i class="bi bi-mailbox me-2"></i> Farmer Requests</a></li>
+            <li><a href="products.html"><i class="bi bi-boxes me-2"></i> Inventory Manager</a></li>
+            <li class="active"><a href="profile.html"><i class="bi bi-person-bounding-box me-2"></i> Business Profile</a></li>
+            <li><a href="settings.html"><i class="bi bi-gear me-2"></i> Security Settings</a></li>
+            <li><a href="../api/logout.php" class="text-danger"><i class="bi bi-box-arrow-left me-2"></i> Sign Out</a></li>
+        </ul>
+    </nav>
+
+    <div id="content">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 px-4 rounded shadow-sm mb-4">
+            <div class="container-fluid p-0">
+                <button type="button" id="sidebarCollapse" class="btn btn-primary"><i class="bi bi-list"></i></button>
+                <h4 class="mb-0 ms-3 fw-bold text-dark">Vendor Profile Settings</h4>
+            </div>
+        </nav>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm p-4 text-center bg-white">
+                    <div class="mb-3 position-relative d-inline-block mx-auto">
+                        <img id="avatarPreview" src="../assets/images/default-profile.png" class="rounded-circle img-thumbnail shadow-sm" style="width: 130px; height: 130px; object-fit: cover;">
+                    </div>
+                    <h5 class="fw-bold text-dark mb-1" id="lblBusinessName">Loading...</h5>
+                    <span class="badge bg-primary-subtle text-primary px-3 py-1 rounded-pill uppercase text-xs fw-bold font-monospace">Verified Supplier</span>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card border-0 shadow-sm p-4 bg-white">
+                    <h5 class="fw-bold text-dark mb-3"><i class="bi bi-building me-2 text-primary"></i>Company Registry Details</h5>
+                    
+                    <div id="profileAlert" class="alert d-none" role="alert"></div>
+
+                    <form id="dealerProfileForm" enctype="multipart/form-data">
+                        <div class="row g-3 mb-3">
+                            <div class="col-sm-6">
+                                <label class="form-label small fw-semibold text-secondary">Company / Shop Name</label>
+                                <input type="text" name="full_name" id="txtFullName" class="form-control" required>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label small fw-semibold text-secondary">Business Contact Line</label>
+                                <input type="text" name="phone" id="txtPhone" class="form-control" placeholder="e.g. +1 555-0199">
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold text-secondary">Warehouse Depot Address</label>
+                            <textarea name="address" id="txtAddress" class="form-control" rows="3" placeholder="Enter full outlet physical location details..."></textarea>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small fw-semibold text-secondary">Update Store Logo / Avatar</label>
+                            <input type="file" name="profile_photo" id="filePhoto" class="form-control" accept="image/*">
+                            <div class="form-text text-muted text-xs mt-1">Supported extensions: JPG, PNG, GIF. Max limit sizing: 5MB.</div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary py-2 px-4"><i class="bi bi-cloud-arrow-up-fill me-1"></i> Commit Vendor Details</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.getElementById('sidebarCollapse').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('active');
+    });
+
+    const alertBox = document.getElementById("profileAlert");
+
+    // Fetch and display active profile metrics
+    const loadProfileData = async () => {
+        try {
+            const response = await fetch(`../api/get_profile.php?t=${Date.now()}`);
+            const data = await response.json();
+
+            if (data.status === "success" && data.profile) {
+                document.getElementById("txtFullName").value = data.profile.full_name || '';
+                document.getElementById("lblBusinessName").textContent = data.profile.full_name || 'New Supplier';
+                document.getElementById("txtPhone").value = data.profile.phone || '';
+                document.getElementById("txtAddress").value = data.profile.address || '';
+                
+                if (data.profile.photo_path) {
+                    // Prepend parent path reference traversal nodes safely
+                    document.getElementById("avatarPreview").src = '../' + data.profile.photo_path;
+                }
+            }
+        } catch (err) {
+            console.error("Profile extraction telemetry handshake error:", err);
+        }
+    };
+
+    // Form Submission: Send multi-part field binary parameters directly to your core update pipeline
+    document.getElementById("dealerProfileForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        alertBox.classList.add("d-none");
+
+        try {
+            const response = await fetch('../api/update_profile.php', {
+                method: "POST",
+                body: formData
+            });
+            const textData = await response.text();
+
+            if (!textData.trim().startsWith('{')) {
+                alertBox.className = "alert alert-danger py-2 text-sm";
+                alertBox.textContent = "Server configuration write failure: " + textData.substring(0, 100);
+                alertBox.classList.remove("d-none");
+                return;
+            }
+
+            const data = JSON.parse(textData);
+            if (data.status === "success") {
+                alertBox.className = "alert alert-success py-2 text-sm";
+                alertBox.textContent = "Account attributes synchronized perfectly.";
+                alertBox.classList.remove("d-none");
+                loadProfileData();
+            } else {
+                alertBox.className = "alert alert-danger py-2 text-sm";
+                alertBox.textContent = data.message;
+                alertBox.classList.remove("d-none");
+            }
+        } catch (err) {
+            alertBox.className = "alert alert-danger py-2 text-sm";
+            alertBox.textContent = "Data pipeline upload error: " + err.message;
+            alertBox.classList.remove("d-none");
+        }
+    });
+
+    loadProfileData();
+</script>
+</body>
+</html>

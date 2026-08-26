@@ -1,0 +1,49 @@
+:root {
+    --bg-canvas: #F5F7FA;
+    --sidebar-solid: #2E7D32;
+    --card-surface: #FFFFFF;
+    --btn-accent: #4CAF50;
+    --text-primary: #333333;
+}
+
+body {
+    background-color: var(--bg-canvas);
+    color: var(--text-primary);
+    font-family: 'Segoe UI', sans-serif;
+    overflow-x: hidden;
+}
+
+#sidebar {
+    min-width: 260px;
+    max-width: 260px;
+    background-color: var(--sidebar-solid);
+    color: #ffffff;
+    min-height: 100vh;
+    transition: all 0.3s;
+}
+
+#sidebar .sidebar-header {
+    padding: 24px 20px;
+    background-color: rgba(0, 0, 0, 0.15);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+#sidebar ul.components {
+    padding: 15px 0;
+}
+
+#sidebar ul li a {
+    padding: 14px 20px;
+    font-size: 0.95rem;
+    display: block;
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+#sidebar ul li a:hover, #sidebar ul li.active > a {
+    color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.12);
+    border-left: 4px solid var(--btn-accent);
+}

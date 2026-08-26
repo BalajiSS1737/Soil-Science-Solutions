@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Manager - DealerHub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body>
+
+<div id="wrapper">
+    <nav id="sidebar">
+        <div class="sidebar-header">
+            <h4 class="mb-0 text-primary fw-bold"><i class="bi bi-shop me-2"></i>DealerHub</h4>
+        </div>
+        <ul class="list-unstyled components">
+            <li><a href="dashboard.html"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a></li>
+            <li><a href="farmer-requests.html"><i class="bi bi-mailbox me-2"></i> Farmer Requests</a></li>
+            <li class="active"><a href="products.html"><i class="bi bi-boxes me-2"></i> Inventory Manager</a></li>
+            <li><a href="settings.html"><i class="bi bi-gear me-2"></i> Settings</a></li>
+            <li><a href="../api/logout.php" class="text-danger"><i class="bi bi-box-arrow-left me-2"></i> Sign Out</a></li>
+        </ul>
+    </nav>
+
+    <div id="content">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 px-4 rounded shadow-sm mb-4">
+            <div class="container-fluid p-0">
+                <button type="button" id="sidebarCollapse" class="btn btn-primary"><i class="bi bi-list"></i></button>
+                <div class="ms-auto">
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addProductModal">
+                        <i class="bi bi-plus-lg me-1"></i> Add Supply Line
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <div class="card border-0 shadow-sm p-4 bg-white">
+            <h5 class="fw-bold mb-3 text-dark">Active Warehouse Stock Listings</h5>
+            <div id="inventoryAlert" class="alert d-none" role="alert"></div>
+
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Product Name</th>
+                            <th>Category</th>
+                            <th>Unit Price</th>
+                            <th>Current Stock</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dealerInventoryTable">
+                        <tr><td colspan="5" class="text-center text-muted py-4">Synchronizing stock catalogs...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addProductModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">Register Input Supply Line</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="addProductForm">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Product Name</label>
+                        <input type="text" name="product_name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">Category</label>
+                        <select name="category" class="form-select" required>
+                            <option value="fertilizer">Fertilizer</option>
+                            <option value="seed">Seeds</option>
+                            <option value="pesticide">Pesticide</option>
+                            <option value="tool">Tools</option>
+                        </select>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-6 mb-3">
+                            <label class="form-label small fw-semibold">Price (₹)</label>
+                            <input type="number" step="0.01" name="price" class="form-control" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label small fw-semibold">Stock Quantity</label>
+                            <input type="number" name="stock" class="form-control" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Commit Stock</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.getElementById('sidebarCollapse').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('active');
+    });
+
+    const inventoryTable = document.getElementById("dealerInventoryTable");
+
+    async function loadInventory() {
+        try {
+            const response = await fetch(`../api/get_dealers.php?t=${Date.now()}`);
+            if (!response.ok) throw new Error(`Server returned ${response.status}`);
+
+            const data = await response.json();
+
+            if (data.status === "success" && data.inventory) {
+                if (data.inventory.length === 0) {
+                    inventoryTable.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">No stock cataloged yet.</td></tr>`;
+                    return;
+                }
+
+                inventoryTable.innerHTML = data.inventory.map(item => `
+                    <tr>
+                        <td><strong>${item.product_name}</strong></td>
+                        <td><span class="badge bg-secondary-subtle text-secondary text-uppercase">${item.category}</span></td>
+                        <td>₹${parseFloat(item.price).toFixed(2)}</td>
+                        <td><span class="fw-bold ${item.stock_quantity < 10 ? 'text-danger' : 'text-dark'}">${item.stock_quantity}</span></td>
+                        <td class="text-end">
+                            <button class="btn btn-sm btn-outline-danger" onclick="deleteProduct(${item.id})">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                inventoryTable.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">Error: ${data.message || 'Unknown API Error'}</td></tr>`;
+            }
+        } catch (err) {
+            console.error("Fetch/System error:", err);
+            inventoryTable.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">Failed to connect.</td></tr>`;
+        }
+    };
+
+    window.deleteProduct = (id) => {
+        if (confirm("Are you sure you want to delete this product?")) {
+            console.log("Deleting product ID:", id);
+            // You will need to add fetch() logic here to call your delete_product.php
+        }
+    };
+
+    document.addEventListener("DOMContentLoaded", loadInventory);
+</script>
+</body>
+</html>

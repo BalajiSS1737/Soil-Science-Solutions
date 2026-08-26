@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmer Requests - DealerHub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body>
+
+<div id="wrapper">
+    <nav id="sidebar">
+        <div class="sidebar-header">
+            <h4 class="mb-0 text-primary fw-bold"><i class="bi bi-shop me-2"></i>DealerHub</h4>
+        </div>
+        <ul class="list-unstyled components">
+            <li><a href="dashboard.html"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a></li>
+            <li class="active"><a href="farmer-requests.html"><i class="bi bi-mailbox me-2"></i> Farmer Requests</a></li>
+            <li><a href="products.html"><i class="bi bi-boxes me-2"></i> Inventory Manager</a></li>
+          <li><a href="settings.html"><i class="bi bi-gear me-2"></i> Settings</a></li>
+            <li><a href="../api/logout.php" class="text-danger"><i class="bi bi-box-arrow-left me-2"></i> Sign Out</a></li>
+        </ul>
+    </nav>
+
+    <div id="content">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 px-4 rounded shadow-sm mb-4">
+            <div class="container-fluid p-0">
+                <button type="button" id="sidebarCollapse" class="btn btn-primary"><i class="bi bi-list"></i></button>
+                <h4 class="mb-0 ms-3 fw-bold text-dark">Incoming Procurement Inbox</h4>
+            </div>
+        </nav>
+
+        <div class="card border-0 shadow-sm p-4 bg-white">
+            <h5 class="fw-bold mb-3 text-dark">Active B2B Marketplace Requests</h5>
+            <div id="requestAlert" class="alert d-none" role="alert"></div>
+
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Farmer Account</th>
+                            <th>Requested Item</th>
+                            <th>Notes / Specifications</th>
+                            <th>Status Node</th>
+                            <th class="text-end">Action Control Panel</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dealerRequestsTable">
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">Synchronizing database transaction lines...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.getElementById('sidebarCollapse').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('active');
+    });
+
+    const requestsTable = document.getElementById("dealerRequestsTable");
+    const statusAlert = document.getElementById("requestAlert");
+
+    const loadIncomingRequests = async () => {
+        try {
+            const response = await fetch(`../api/get_farmer_requests.php?t=${Date.now()}`);
+            const data = await response.json();
+
+            if (data.status === "success") {
+                if (data.requests.length === 0) {
+                    requestsTable.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">Your incoming order pipeline is completely empty.</td></tr>`;
+                    return;
+                }
+
+                requestsTable.innerHTML = data.requests.map(req => {
+                    let badgeColor = "bg-warning";
+                    if (req.status === "approved") badgeColor = "bg-success";
+                    if (req.status === "rejected") badgeColor = "bg-danger";
+
+                    // Disable buttons if the item has already been processed
+                    const actionButtons = req.status === "pending" ? `
+                        <button class="btn btn-sm btn-success me-1" onclick="processOrderTicket(${req.id}, 'approved')"><i class="bi bi-check-lg"></i> Approve</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="processOrderTicket(${req.id}, 'rejected')"><i class="bi bi-x-lg"></i> Reject</button>
+                    ` : `<span class="text-muted small font-monospace">Archived Row</span>`;
+
+                    return `
+                        <tr>
+                            <td><strong>${req.farmer_name}</strong></td>
+                            <td><span class="badge bg-secondary-subtle text-dark">${req.product_name || 'Legacy Stock Item'}</span></td>
+                            <td><small class="text-muted">${req.message || 'No additional text left by buyer.'}</small></td>
+                            <td><span class="badge ${badgeColor} text-uppercase">${req.status}</span></td>
+                            <td class="text-end">${actionButtons}</td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        } catch (err) {
+            requestsTable.innerHTML = `<tr><td colspan="5" class="text-center text-danger py-4">Failed to read transaction records from server nodes.</td></tr>`;
+        }
+    };
+
+    window.processOrderTicket = async (id, targetStatus) => {
+        try {
+            const response = await fetch('../api/update_request_status.php', {
+                method: "POST",
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `id=${id}&status=${targetStatus}`
+            });
+            const data = await response.json();
+
+            if (data.status === "success") {
+                statusAlert.className = "alert alert-success py-2 text-sm";
+                statusAlert.textContent = data.message;
+                statusAlert.classList.remove("d-none");
+                loadIncomingRequests(); // Live reload matching records layout
+            } else {
+                statusAlert.className = "alert alert-danger py-2 text-sm";
+                statusAlert.textContent = data.message;
+                statusAlert.classList.remove("d-none");
+            }
+        } catch (err) {
+            statusAlert.className = "alert alert-danger py-2 text-sm";
+            statusAlert.textContent = "Network synchronization connection error processing ticket.";
+            statusAlert.classList.remove("d-none");
+        }
+    };
+
+    loadIncomingRequests();
+</script>
+</body>
+</html>

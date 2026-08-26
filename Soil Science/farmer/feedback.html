@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Platform Feedback - Soil Science</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body>
+
+<div id="wrapper">
+    <nav id="sidebar">
+        <div class="sidebar-header">
+            <h4 class="mb-0 text-success fw-bold"><i class="bi bi-tree-fill me-2"></i>Soil Science</h4>
+        </div>
+        <ul class="list-unstyled components">
+            <li><a href="dashboard.html"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a></li>
+            <li><a href="soil-analysis.html"><i class="bi bi-moisture me-2"></i> Soil Analysis</a></li>
+            <li><a href="crop-recommendation.html"><i class="bi bi-journal-check me-2"></i> Crop Engine</a></li>
+            <li><a href="dealers.html"><i class="bi bi-shop me-2"></i> Locate Dealers</a></li>
+            <li class="active"><a href="feedback.html"><i class="bi bi-chat-dots me-2"></i> Feedback</a></li>
+            <li><a href="settings.html"><i class="bi bi-gear me-2"></i> System Settings</a></li>
+            <li><a href="../api/logout.php" class="text-danger"><i class="bi bi-box-arrow-left me-2"></i> Sign Out</a></li>
+        </ul>
+    </nav>
+    <!-- Main Workspace Content -->
+    <div id="content">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 px-4 rounded shadow-sm mb-4">
+            <div class="container-fluid p-0">
+                <button type="button" id="sidebarCollapse" class="btn btn-success-custom"><i class="bi bi-list"></i></button>
+                <h4 class="mb-0 ms-3 fw-bold text-dark">Platform Evaluation Hub</h4>
+            </div>
+        </nav>
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card border-0 shadow-sm p-4 bg-white">
+                    <h5 class="fw-bold mb-1 text-dark">Share Your Experience</h5>
+                    <p class="text-muted small mb-4">Your diagnostic feedback helps our engineering team refine predictive accuracy benchmarks.</p>
+                    
+                    <div id="feedbackAlert" class="alert d-none" role="alert"></div>
+
+                    <form id="feedbackSubmissionForm">
+                        <!-- Rating Score Select -->
+                        <div class="mb-4">
+                            <label class="form-label small fw-semibold">Overall System Experience Rating</label>
+                            <select name="rating" class="form-select" required>
+                                <option value="" disabled selected>Choose a score scale...</option>
+                                <option value="5">⭐⭐⭐⭐⭐ Excellent (highly accurate recommendations)</option>
+                                <option value="4">⭐⭐⭐⭐ Good (helpful telemetry logs)</option>
+                                <option value="3">⭐⭐⭐ Satisfactory (standard deployment)</option>
+                                <option value="2">⭐⭐ Fair (requires analytical refinement)</option>
+                                <option value="1">⭐ Poor (encountered platform exceptions)</option>
+                            </select>
+                        </div>
+
+                        <!-- Extended comments description content block text area -->
+                        <div class="mb-4">
+                            <label class="form-label small fw-semibold">Review Details & Suggestions</label>
+                            <textarea name="comments" class="form-control" rows="5" placeholder="Detail your experience with the crop predictive model engine, marketplace processing delays, or layout bugs..." required></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-success-custom py-2 px-4"><i class="bi bi-send-check me-1"></i> Submit Report</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.getElementById('sidebarCollapse').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('active');
+    });
+
+    document.getElementById("feedbackSubmissionForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const formAlert = document.getElementById("feedbackAlert");
+        const formData = new FormData(e.target);
+
+        try {
+            const response = await fetch(`../api/submit_feedback.php?t=${Date.now()}`, {
+                method: "POST",
+                body: formData
+            });
+            const data = await response.json();
+
+            if (data.status === "success") {
+                formAlert.className = "alert alert-success";
+                formAlert.textContent = "Thank you! Your feedback logs have been dispatched to system administration archives.";
+                formAlert.classList.remove("d-none");
+                e.target.reset();
+            } else {
+                formAlert.className = "alert alert-danger";
+                formAlert.textContent = data.message;
+                formAlert.classList.remove("d-none");
+            }
+        } catch (err) {
+            formAlert.className = "alert alert-danger";
+            formAlert.textContent = "Network synchronization pipe dropped submitting assessment data metrics.";
+            formAlert.classList.remove("d-none");
+        }
+    });
+</script>
+</body>
+</html>

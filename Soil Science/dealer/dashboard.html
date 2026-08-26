@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dealer Dashboard - Soil Science</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body>
+
+<div id="wrapper">
+    <nav id="sidebar">
+        <div class="sidebar-header">
+            <h4 class="mb-0 text-primary fw-bold"><i class="bi bi-shop me-2"></i>DealerHub</h4>
+        </div>
+        <ul class="list-unstyled components">
+            <li class="active"><a href="dashboard.html"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a></li>
+            <li><a href="farmer-requests.html"><i class="bi bi-mailbox me-2"></i> Farmer Requests</a></li>
+            <li><a href="products.html"><i class="bi bi-boxes me-2"></i> Inventory Manager</a></li>
+            <li><a href="settings.html"><i class="bi bi-gear me-2"></i> Settings</a></li>
+            <li><a href="../api/logout.php" class="text-danger"><i class="bi bi-box-arrow-left me-2"></i> Sign Out</a></li>
+        </ul>
+    </nav>
+
+    <div id="content">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 px-4 rounded shadow-sm mb-4">
+            <div class="container-fluid p-0">
+                <button type="button" id="sidebarCollapse" class="btn btn-primary"><i class="bi bi-list"></i></button>
+                <div class="ms-auto d-flex align-items-center">
+                    <span class="me-3 text-muted" id="dealerGreeting">Welcome, Vendor</span>
+                    <i class="bi bi-building h4 mb-0 text-muted"></i>
+                </div>
+            </div>
+        </nav>
+
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm p-4 h-100 bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted text-uppercase small">Pending Requests</h6>
+                            <h3 class="fw-bold mb-0 text-dark" id="pendingCount">0</h3>
+                        </div>
+                        <div class="bg-warning-subtle text-warning p-3 rounded-circle"><i class="bi bi-bell h3 mb-0"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm p-4 h-100 bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted text-uppercase small">Active Inventory Lines</h6>
+                            <h3 class="fw-bold mb-0 text-dark" id="activeItemsCount">0 Items</h3>
+                        </div>
+                        <div class="bg-primary-subtle text-primary p-3 rounded-circle"><i class="bi bi-boxes h3 mb-0"></i></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm p-4 h-100 bg-white">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6 class="text-muted text-uppercase small">Fulfilled Orders</h6>
+                            <h3 class="fw-bold mb-0 text-dark" id="fulfilledCount">0 Total</h3>
+                        </div>
+                        <div class="bg-success-subtle text-success p-3 rounded-circle"><i class="bi bi-check-circle h3 mb-0"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm p-4 bg-white mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0 text-dark">Recent Incoming Orders</h5>
+                <a href="farmer-requests.html" class="btn btn-sm btn-outline-primary">View All Management Records</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Farmer Username</th>
+                            <th>Product Requested</th>
+                            <th>Quantity Context / Note</th>
+                            <th>Date Dispatched</th>
+                            <th>Status Badge</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dealerSummaryTable">
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">Syncing vendor stream accounts...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.getElementById('sidebarCollapse').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('active');
+    });
+
+    document.addEventListener("DOMContentLoaded", async () => {
+        try {
+            const response = await fetch(`../api/get_dealer_dashboard.php?t=${Date.now()}`);
+            const data = await response.json();
+
+            if (data.status === "success") {
+                document.getElementById("dealerGreeting").textContent = `Welcome, ${data.username}`;
+                document.getElementById("pendingCount").textContent = data.metrics.pending;
+                document.getElementById("activeItemsCount").textContent = `${data.metrics.total_products} Lines`;
+                document.getElementById("fulfilledCount").textContent = `${data.metrics.approved} Closed`;
+
+                const table = document.getElementById("dealerSummaryTable");
+                if (data.requests.length === 0) {
+                    table.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4">No incoming farmer supply requests recorded.</td></tr>`;
+                    return;
+                }
+
+                table.innerHTML = data.requests.map(r => `
+                    <tr>
+                        <td><strong>${r.farmer_name}</strong></td>
+                        <td>${r.product_name}</td>
+                        <td class="text-muted small">${r.message}</td>
+                        <td>${new Date(r.created_at).toLocaleDateString()}</td>
+                        <td>
+                            <span class="badge ${r.status === 'pending' ? 'bg-warning text-dark' : r.status === 'approved' ? 'bg-success' : 'bg-danger'}">
+                                ${r.status}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        } catch (err) {
+            console.error("Dealer metrics runtime synchronization failure:", err);
+        }
+    });
+</script>
+</body>
+</html>

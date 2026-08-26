@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soil Science - Gateway Portal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .auth-card {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            overflow: hidden;
+            background: #ffffff;
+            max-width: 450px;
+            width: 100%;
+        }
+        .auth-header {
+            background: #1e2229;
+            color: #ffffff;
+            padding: 2.5rem 2rem;
+            text-align: center;
+        }
+        .nav-tabs .nav-link {
+            border: none;
+            color: #6c757d;
+            font-weight: 600;
+            padding: 1rem;
+            transition: all 0.2s ease;
+        }
+        .nav-tabs .nav-link.active {
+            color: #11998e;
+            border-bottom: 3px solid #11998e;
+            background: none;
+        }
+        .btn-gateway {
+            background: linear-gradient(135deg, #11998e 0%, #117a65 100%);
+            color: white;
+            border: none;
+            font-weight: 600;
+            padding: 0.75rem;
+            transition: opacity 0.2s ease;
+        }
+        .btn-gateway:hover {
+            opacity: 0.9;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<div class="auth-card">
+    <div class="auth-header">
+        <h3 class="fw-bold mb-1"><i class="bi bi-tree-fill text-success me-2"></i>Soil Science</h3>
+        <p class="text-muted small mb-0">User & Vendor Management Gateway</p>
+    </div>
+
+    <ul class="nav nav-tabs nav-fill" id="authTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#loginPanel" type="button" role="tab">Sign In</button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" id="register-tab" data-bs-toggle="tab" data-bs-target="#registerPanel" type="button" role="tab">Create Account</button>
+        </li>
+    </ul>
+
+    <div class="card-body p-4">
+        <div id="portalAlert" class="alert d-none" role="alert"></div>
+
+        <div class="tab-content" id="authTabsContent">
+            <!-- USER/DEALER LOGIN -->
+            <div class="tab-pane fade show active" id="loginPanel" role="tabpanel">
+                <form id="loginForm">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Username or Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-person text-muted"></i></span>
+                            <input type="text" name="login_identity" class="form-control" placeholder="Enter username/email" required>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-semibold text-secondary">Account Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-lock text-muted"></i></span>
+                            <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-gateway w-100 rounded-3 shadow-sm">Secure Sign In</button>
+                </form>
+            </div>
+
+            <!-- USER/DEALER REGISTRATION -->
+            <div class="tab-pane fade" id="registerPanel" role="tabpanel">
+                <form id="registerForm">
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Unique Username</label>
+                        <input type="text" name="username" class="form-control" placeholder="e.g. farmertom" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Email Address</label>
+                        <input type="email" name="email" class="form-control" placeholder="name@domain.com" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-secondary">Account Password</label>
+                        <input type="password" name="password" class="form-control" placeholder="Minimum 6 characters" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small fw-semibold text-secondary">Account Role Type</label>
+                        <select name="role" class="form-select" required>
+                            <option value="" disabled selected>Choose your operational path...</option>
+                            <option value="farmer">Agricultural Producer (Farmer)</option>
+                            <option value="dealer">Supply Distribution Center (Dealer)</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-gateway w-100 rounded-3 shadow-sm">Initialize Membership</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const globalAlert = document.getElementById("portalAlert");
+
+    const displayFeedback = (msg, status) => {
+        globalAlert.className = `alert alert-${status} text-sm py-2 mb-3`;
+        globalAlert.textContent = msg;
+        globalAlert.classList.remove("d-none");
+    };
+
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+
+        try {
+            const response = await fetch("api/login.php", { method: "POST", body: formData });
+            const data = await response.json();
+
+            if (data.status === "success") {
+                displayFeedback("Handshake authorized. Redirecting...", "success");
+                setTimeout(() => window.location.href = data.redirect, 600);
+            } else {
+                displayFeedback(data.message, "danger");
+            }
+        } catch (err) {
+            displayFeedback("Connection error linking to server nodes.", "danger");
+        }
+    });
+
+  // Replace the registration form listener block in index.html to read text errors
+    document.getElementById("registerForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        displayFeedback("Compiling payload stream...", "info");
+
+        try {
+            const response = await fetch("api/register.php", { method: "POST", body: formData });
+            const responseText = await response.text(); // Grab raw text instead of forcing JSON immediately
+
+            // If the server returned an HTML error screen or PHP crash dump
+            if (!responseText.trim().startsWith('{')) {
+                displayFeedback("Server Layout Crash: " + responseText.substring(0, 180) + "...", "danger");
+                return;
+            }
+
+            const data = JSON.parse(responseText);
+            if (data.status === "success") {
+                displayFeedback("Account created! Switching to Sign In...", "success");
+                e.target.reset();
+                setTimeout(() => {
+                    new bootstrap.Tab(document.getElementById('login-tab')).show();
+                    globalAlert.classList.add("d-none");
+                }, 1500);
+            } else {
+                displayFeedback(data.message, "danger");
+            }
+        } catch (err) {
+            displayFeedback("Runtime error processing request: " + err.message, "danger");
+        }
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Profile - Soil Science</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="../assets/css/style.css">
+    <link rel="stylesheet" href="../assets/css/dashboard.css">
+</head>
+<body>
+
+<div id="wrapper">
+    <nav id="sidebar">
+        <div class="sidebar-header">
+            <h4 class="mb-0 text-success fw-bold"><i class="bi bi-tree-fill me-2"></i>Soil Science</h4>
+        </div>
+        <ul class="list-unstyled components">
+            <li><a href="dashboard.html"><i class="bi bi-speedometer2 me-2"></i> Dashboard</a></li>
+            <li><a href="soil-analysis.html"><i class="bi bi-moisture me-2"></i> Soil Analysis</a></li>
+            <li><a href="crop-recommendation.html"><i class="bi bi-journal-check me-2"></i> Crop Engine</a></li>
+            <li><a href="dealers.html"><i class="bi bi-shop me-2"></i> Locate Dealers</a></li>
+            <li class="active"><a href="profile.html"><i class="bi bi-person-bounding-box me-2"></i> My Profile</a></li>
+            <li><a href="../api/logout.php" class="text-danger"><i class="bi bi-box-arrow-left me-2"></i> Sign Out</a></li>
+        </ul>
+    </nav>
+
+    <div id="content">
+        <nav class="navbar navbar-expand-lg navbar-light bg-white py-3 px-4 rounded shadow-sm mb-4">
+            <div class="container-fluid p-0">
+                <button type="button" id="sidebarCollapse" class="btn btn-success-custom"><i class="bi bi-list"></i></button>
+                <h4 class="mb-0 ms-3 fw-bold text-dark">Account Profile Manager</h4>
+            </div>
+        </nav>
+<!-- Replace the avatar card block with this clean version -->
+<div class="col-md-4">
+    <div class="card border-0 shadow-sm p-4 text-center bg-white">
+        <div class="mb-3">
+            <img id="profileAvatarImg" src="../assets/images/default-profile.png" alt="Avatar" 
+                 class="rounded-circle img-thumbnail shadow-sm" 
+                 style="width: 150px; height: 150px; object-fit: cover;"
+                 onerror="this.src='https://placehold.co/150';">
+        </div>
+        <h5 class="fw-bold mb-1 text-dark" id="profileDisplayTitle">Loading Profile...</h5>
+        <p class="text-muted small text-uppercase" id="profileDisplayRole">Farmer Node</p>
+    </div>
+</div>
+
+            <div class="col-md-8">
+                <div class="card border-0 shadow-sm p-4 bg-white">
+                    <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-pencil-square me-2"></i>Personal Information</h5>
+                    <div id="profileAlert" class="alert d-none" role="alert"></div>
+
+                    <form id="profileUpdateForm" enctype="multipart/form-data">
+                        <div class="row g-3 mb-3">
+                            <div class="col-sm-6">
+                                <label class="form-label small fw-semibold">Full Legal Name</label>
+                                <input type="text" name="full_name" id="formFullName" class="form-control" required>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label small fw-semibold">Contact Phone Number</label>
+                                <input type="tel" name="phone" id="formPhone" class="form-control" placeholder="+1 (555) 000-0000">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-semibold">Physical Farm/Delivery Address</label>
+                            <textarea name="address" id="formAddress" class="form-control" rows="3" placeholder="Enter your full shipping or rural route geographical address..."></textarea>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label small fw-semibold">Update Profile Photo</label>
+                            <input type="file" name="profile_photo" class="form-control" accept="image/jpeg,image/png,image/gif">
+                            <div class="form-text text-muted text-xs">Supported extensions: JPG, PNG, GIF. Max limit size: 5MB.</div>
+                        </div>
+                        <button type="submit" class="btn btn-success-custom"><i class="bi bi-cloud-arrow-up me-1"></i> Save Profile Changes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.getElementById('sidebarCollapse').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.toggle('active');
+    });
+
+        const profileForm = document.getElementById("profileUpdateForm");
+        const alertBox = document.getElementById("profileAlert");
+
+        // Load profile (GET) and populate form
+        const loadProfileData = async () => {
+            try {
+                const res = await fetch('../api/get_profile.php');
+                const text = await res.text();
+                if (!text.trim().startsWith('{')) {
+                    alertBox.className = 'alert alert-danger';
+                    alertBox.textContent = 'Server Script Crash: ' + text.substring(0,150);
+                    alertBox.classList.remove('d-none');
+                    return;
+                }
+                const data = JSON.parse(text);
+                if (data.status === 'success' && data.profile) {
+                    document.getElementById('formFullName').value = data.profile.full_name || '';
+                    document.getElementById('formPhone').value = data.profile.phone || '';
+                    document.getElementById('formAddress').value = data.profile.address || '';
+                    document.getElementById('profileDisplayTitle').textContent = data.profile.full_name || 'Farmer';
+                    if (data.profile.avatar_url) document.getElementById('profileAvatarImg').src = data.profile.avatar_url;
+                } else {
+                    alertBox.className = 'alert alert-info';
+                    alertBox.textContent = data.message || 'No profile data available.';
+                    alertBox.classList.remove('d-none');
+                }
+            } catch (err) {
+                alertBox.className = 'alert alert-danger';
+                alertBox.textContent = 'Network error: ' + err.message;
+                alertBox.classList.remove('d-none');
+            }
+        }
+
+        // Handle form submit to update profile
+        profileForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            alertBox.classList.add('d-none');
+            const formData = new FormData(profileForm);
+            try {
+                const res = await fetch('../api/update_profile.php', { method: 'POST', body: formData });
+                const text = await res.text();
+                if (!text.trim().startsWith('{')) {
+                    alertBox.className = 'alert alert-danger';
+                    alertBox.textContent = 'Server Script Crash: ' + text.substring(0,150);
+                    alertBox.classList.remove('d-none');
+                    return;
+                }
+                const data = JSON.parse(text);
+                if (data.status === 'success') {
+                    alertBox.className = 'alert alert-success';
+                    alertBox.textContent = data.message || 'Profile updated.';
+                    alertBox.classList.remove('d-none');
+                    loadProfileData();
+                } else {
+                    alertBox.className = 'alert alert-danger';
+                    alertBox.textContent = data.message || 'Update failed.';
+                    alertBox.classList.remove('d-none');
+                }
+            } catch (err) {
+                alertBox.className = 'alert alert-danger';
+                alertBox.textContent = 'Network error: ' + err.message;
+                alertBox.classList.remove('d-none');
+            }
+        });
+
+        loadProfileData();
+</script>
+</body>
+</html>
